@@ -15,10 +15,33 @@ public final class CmsPrincipalParser {
     public static CmsUserPrincipal fromJwt(Jwt jwt) {
         return CmsUserPrincipal.fromClaims(
                 jwt.getSubject(),
-                jwt.getClaimAsString("platform_role"),
+                resolvePlatformRole(jwt),
                 jwt.getClaimAsStringList("company_ids"),
                 jwt.getClaimAsStringList("premise_ids"),
                 jwt.getClaim("company_memberships"));
+    }
+
+    private static String resolvePlatformRole(Jwt jwt) {
+        Set<String> realmRoles = realmRoles(jwt);
+        if (realmRoles.contains("REGULATOR")) {
+            return "REGULATOR";
+        }
+        if (realmRoles.contains("ADMIN")) {
+            return "ADMIN";
+        }
+        if (realmRoles.contains("COMPANY_USER")) {
+            return "COMPANY_USER";
+        }
+        return jwt.getClaimAsString("platform_role");
+    }
+
+    private static Set<String> realmRoles(Jwt jwt) {
+        Map<String, Object> realmAccess = jwt.getClaim("realm_access");
+        Object roles = realmAccess != null ? realmAccess.get("roles") : null;
+        if (roles instanceof List<?> roleList) {
+            return roleList.stream().map(String::valueOf).collect(Collectors.toSet());
+        }
+        return Set.of();
     }
 
     static Set<UUID> parseUuids(List<String> values) {
