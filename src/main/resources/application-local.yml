@@ -14,6 +14,6 @@ spring:
     oauth2:
       resourceserver:
         jwt:
-          issuer-uri: http://localhost:9090/realms/chemical-management
+          issuer-uri: http://localhost:8080/realms/chemical-platform
   kafka:
     bootstrap-servers: localhost:9092
